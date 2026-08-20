@@ -52,4 +52,16 @@ async def get_news_list(
                  "hasMore": False
                  }
     }
+@router.get("/detail")
+async def detail_info(
+        db: AsyncSession = Depends(get_database),
+        new_id: int = Query(None, alias="id")):
+    await news.increase_news_view(db, new_id)
+    new = await news.detail_info(db, new_id)
+    data = {**new.__dict__, "relatedNews": await news.select_related_news(db, new)}
+    return {
+        "code":200,
+        "message":"获取新闻详情成功",
+        "data": data,
+    }
 
