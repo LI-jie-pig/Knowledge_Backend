@@ -22,6 +22,6 @@ async def get_database():
             await session.commit() #提交事务
         except:
             await session.rollback() # 有异常回滚
-            raise Exception("数据库操作异常")
+            raise
         finally:
             await session.close() #关闭会话

@@ -24,3 +24,8 @@ class User(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, comment="手机号")
     def __repr__(self):
         return f"user<id:{self.id},username:{self.username}"
+class UserToken(Base):
+    __tablename__ = 'user_token'
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="用户ID")
+    token: Mapped[str] = mapped_column(String(255), nullable=False, comment="令牌")
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="过期时间")

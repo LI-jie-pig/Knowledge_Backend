@@ -2,6 +2,9 @@ from fastapi import FastAPI
 
 from routers import news, user
 from fastapi.middleware.cors import CORSMiddleware
+
+from utils.exception import register_exception_handlers
+
 app = FastAPI()
 #挂载路由
 app.include_router(news.router)
@@ -13,6 +16,7 @@ app.add_middleware(
     allow_methods=["*"], # 允许所有HTTP方法
     allow_headers=["*"], # 允许所有HTTP头
 )
+register_exception_handlers(app)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
