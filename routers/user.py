@@ -1,13 +1,12 @@
-from http.client import HTTPException
 
-from fastapi import APIRouter
+from fastapi import APIRouter,HTTPException
 from fastapi import Depends, Query
 from config.db_conf import get_database
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from crud.user import select_user_by_username, create_user, create_token, login_user, update_info
+from crud.user import select_user_by_username, create_user, create_token, login_user, update_info, change_password
 from models.user import User
-from schemas.user import UserRequest, UserAuthResponse, UserInfoResponse, UserInfoRequest
+from schemas.user import UserRequest, UserAuthResponse, UserInfoResponse, UserInfoRequest, UserChangePassword
 from utils.auth import get_user_by_token
 from utils.response import success_response
 
@@ -57,3 +56,11 @@ async def update_user_info(
 ):
     user = await update_info(user_info, user.id, db)
     return success_response(UserInfoRequest.model_validate(user), "更新用户信息成功")
+@router.put("/password")
+async def change_password_user(
+        password_list: UserChangePassword,
+        user: User = Depends(get_user_by_token),
+        db: AsyncSession = Depends(get_database)
+):
+    await change_password(user, password_list.old_password, password_list.new_password, db)
+    return success_response({"message": "密码更新成功"})

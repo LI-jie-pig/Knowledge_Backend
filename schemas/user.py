@@ -20,6 +20,9 @@ class UserInfoResponse(UserInfoBase):
     )
 class UserInfoRequest(UserInfoBase):
     phone: Optional[str] = Field(None, max_length=11, description="手机号")
+    model_config = ConfigDict(
+        from_attributes=True #允许从ORM对象属性获取数据
+    )
 # data数据类型
 class UserAuthResponse(BaseModel):
     token: str
@@ -28,3 +31,6 @@ class UserAuthResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True #允许从ORM对象属性获取数据
     )
+class UserChangePassword(BaseModel):
+    old_password: str = Field(..., min_length=3, max_length=50, alias="oldPassword")
+    new_password: str = Field(..., min_length=3, max_length=50, alias="newPassword")

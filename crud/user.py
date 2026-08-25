@@ -80,3 +80,15 @@ async def update_info(
     await db.commit()
     user_true = await db.execute(select(User).where(User.id == user_id))
     return user_true.scalar_one_or_none()
+async def change_password(
+        user: User,
+        old_password: str,
+        new_password: str,
+        db: AsyncSession
+):
+    result_user = (await db.execute(select(User).where(User.id == user.id))).scalar_one_or_none()
+    if not verify_password(old_password, result_user.password):
+        raise HTTPException(status_code=400, detail="密码错误,不能修改密码")
+    password_string = get_password_hash(new_password)
+    await db.execute(update(User).where(User.id == user.id).values(password = password_string))
+    await db.commit()
