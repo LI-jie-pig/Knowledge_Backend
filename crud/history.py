@@ -1,8 +1,10 @@
 from datetime import datetime
+from email import message
 from unittest import result
 
 from click import DateTime
-from sqlalchemy import select, update, func
+from fastapi import HTTPException
+from sqlalchemy import select, update, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.history import History
 from models.news import News
@@ -34,3 +36,19 @@ async def select_history_list(
     result = await db.execute(select(History,News).join(News, History.news_id == News.id).where(History.user_id == user.id).order_by(History.view_time.desc()).offset((page-1) * page_size).limit(page_size))
     total = await db.execute(select(func.count(History.id)).where(History.user_id == user.id))
     return result.all(), total.scalar_one()
+async def delete_history_info(
+    history_id: int,
+    db: AsyncSession
+):
+    result = await db.execute(delete(History).where(History.id == history_id))
+    await db.commit()
+    if result.rowcount <= 0:
+        raise HTTPException(status_code="500", detail="该历史记录不存在")
+    return True
+async def clear_all_history(
+        db: AsyncSession,
+        user: User
+):
+    await db.execute(delete(History).where(History.user_id == user.id))
+    await db.commit()
+    return True
