@@ -1,5 +1,6 @@
 import traceback
 from fastapi import HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette import status
@@ -19,7 +20,24 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         }
     )
 
-
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    # 缺 Authorization → 按未登录处理，前端好提示
+    for err in errors:
+        loc = err.get("loc") or []
+        if "Authorization" in loc:
+            return JSONResponse(
+                status_code=401,
+                content={"code": 401, "message": "请先登录", "data": None},
+            )
+        first = errors[0] if errors else {}
+        loc = ".".join(str(x) for x in first.get("loc", []) if x not in ("body", "query", "header"))
+        msg = first.get("msg", "请求参数错误")
+        message = f"{loc}: {msg}" if loc else msg
+        return JSONResponse(
+            status_code=422,
+            content={"code": 422, "message": message, "data": errors if DEBUG_MODE else None},
+        )
 async def integrity_error_handler(request: Request, exc: IntegrityError):
     """处理数据库完整性约束错误：唯一索引冲突、外键约束"""
     error_msg = str(exc.orig)
@@ -94,3 +112,4 @@ def register_exception_handlers(app):
     app.add_exception_handler(IntegrityError, integrity_error_handler)
     app.add_exception_handler(SQLAlchemyError, sqlalchemy_error_handler)
     app.add_exception_handler(Exception, general_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)

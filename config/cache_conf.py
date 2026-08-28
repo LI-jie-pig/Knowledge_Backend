@@ -2,12 +2,14 @@ import json
 from redis.asyncio import ConnectionPool
 
 import redis.asyncio
-REDIS_HOST = "localhost"
+REDIS_HOST = "203.195.243.93"
+REDIS_PASSWORD = "YourRedisPassword123"
 #创建redis的连接对象
 pool = ConnectionPool(
     host=REDIS_HOST,
     port=6379,
     db=1,
+    password=REDIS_PASSWORD,
     protocol=2,   # 放到连接池！！
     decode_responses=True,#自动将返回值解码为字符串
     socket_timeout=5

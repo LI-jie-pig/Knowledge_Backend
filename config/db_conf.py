@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, result
 
 #1.创建异步引擎
-ASYNC_DATABASE_URL = "mysql+aiomysql://root:lgxlgx945@localhost:3306/knowledge_backend?charset=utf8mb4"
+ASYNC_DATABASE_URL = "mysql+aiomysql://root:YourMySQLPassword123@203.195.243.93:3306/knowledge_backend?charset=utf8mb4"
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
     echo = True, # 开启日志打印

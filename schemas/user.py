@@ -4,6 +4,7 @@ from typing import Optional
 class UserRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=3, max_length=50)
+    nickname: str = Field(..., max_length=50)
 #user_info 对应的类
 class UserInfoBase(BaseModel):
     """用户信息基础数据模型"""

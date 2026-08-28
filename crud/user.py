@@ -32,7 +32,7 @@ async def create_user(
 ):
     #密码加密
     password = get_password_hash(user.password)
-    user = User(username=user.username, password=password)#类似java的构造函数
+    user = User(username=user.username, password=password, nickname = user.nickname)#类似java的构造函数
     db.add(user)
     await db.commit()
     await db.refresh(user) #从数据库读取最新的user

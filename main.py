@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import news, user, favorite, history
+from routers import news, user, favorite, history, document
 from fastapi.middleware.cors import CORSMiddleware
 
 from utils.exception import register_exception_handlers
@@ -11,6 +11,7 @@ app.include_router(news.router)
 app.include_router(user.router)
 app.include_router(favorite.router)
 app.include_router(history.router)
+app.include_router(document.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # 允许所有来源的请求，生产环境需要指定允许的来源
