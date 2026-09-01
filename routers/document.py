@@ -8,9 +8,11 @@ from crud.document import (
     select_document,
     select_document_categories,
     get_category_by_id,
+    file_download_method, delete_document
 )
 from models.user import User
-from schemas.document import DocumentResponse
+from schemas.document import DocumentParseResponse, DocumentResponse
+from services.document_parse import parse_document
 from utils.auth import get_user_by_token
 from utils.minio_upload import upload_document_file
 from utils.response import success_response
@@ -100,3 +102,72 @@ async def upload_document(
 
     response_data = DocumentResponse.from_orm_doc(doc, category_name=category.name)
     return success_response(data=response_data, message="上传成功")
+
+
+@router.get("/file")
+async def file_download(
+        db: AsyncSession = Depends(get_database),
+        document_id: int = Query(..., alias="id"),
+        disposition: str = Query("inline", alias="disposition"),
+):
+    if disposition not in ("inline", "attachment"):
+        raise HTTPException(status_code=400, detail="disposition 仅支持 inline 或 attachment")
+
+    result = await file_download_method(db, document_id, disposition)
+    if not result:
+        raise HTTPException(status_code=404, detail="文档不存在")
+
+    return success_response(
+        data={
+            "url": result["url"],
+            "fileName": result["file_name"],
+            "fileType": result["file_type"],
+            "disposition": result["disposition"],
+            "expiresIn": result["expires_in"],
+        },
+        message="文档访问链接",
+    )
+
+
+@router.post("/parse")
+async def parse_document_api(
+        db: AsyncSession = Depends(get_database),
+        document_id: int = Query(..., alias="id"),
+        force: bool = Query(False, alias="force"),
+        user: User = Depends(get_user_by_token),
+):
+    """
+    同步解析文档：下载原文件 → 抽文本 → 分片 → 回写 preview/status/chunk_count。
+    force=true 时允许对已完成文档重新解析。
+    """
+    _ = user
+    doc = await parse_document(db, document_id, force=force)
+    message = "解析完成" if doc.status == 2 else "解析失败"
+    return success_response(
+        data=DocumentParseResponse.from_orm_doc(doc),
+        message=message,
+    )
+
+
+@router.get("/parse/status")
+async def parse_status_api(
+        db: AsyncSession = Depends(get_database),
+        document_id: int = Query(..., alias="id"),
+):
+    """查询文档解析状态（供详情页轮询）。"""
+    doc = await query_detail_info(db, document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="文档不存在")
+    return success_response(
+        data=DocumentParseResponse.from_orm_doc(doc),
+        message="查询成功",
+    )
+
+
+@router.delete("/delete")
+async def delete(
+        db: AsyncSession = Depends(get_database),
+        document_id: int = Query(..., alias="id"),
+):
+    result = await delete_document(document_id, db)
+    return success_response(data="", message="删除成功")

@@ -62,3 +62,25 @@ class DocumentResponse(BaseModel):
             uploadTime=doc.upload_time,
             previewText=doc.preview_text,
         )
+
+
+class DocumentParseResponse(BaseModel):
+    """文档解析结果 / 解析状态响应。"""
+    id: int
+    status: str
+    preview_text: Optional[str] = Field(None, alias="previewText")
+    chunk_count: int = Field(0, alias="chunkCount")
+    parse_error: Optional[str] = Field(None, alias="parseError")
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    @classmethod
+    def from_orm_doc(cls, doc) -> "DocumentParseResponse":
+        """从 ORM Document 构建解析状态响应。"""
+        return cls(
+            id=doc.id,
+            status=STATUS_LABEL.get(doc.status, "pending"),
+            previewText=doc.preview_text,
+            chunkCount=doc.chunk_count or 0,
+            parseError=doc.parse_error,
+        )
