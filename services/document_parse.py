@@ -1,7 +1,9 @@
 """
 文档解析业务编排。
-负责：校验状态 → 下载文件 → 抽文本 → 分片 → 回写 document 表。
+负责：校验状态 → 下载文件 → 抽文本 → 分片 → 写入 Milvus → 回写 document 表。
 """
+import asyncio
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +18,7 @@ from crud.document import (
 from models.documentCategory import Document
 from utils.chunking import split_text
 from utils.minio_upload import download_object_bytes
+from utils.milvus_store import store_document_chunks
 from utils.parsers import get_parser
 
 
@@ -86,11 +89,28 @@ async def parse_document(
 
         chunks = split_text(full_text)
         preview = full_text[:PREVIEW_MAX_CHARS]
+
+        # 分片 embedding 后写入 Milvus（同步 IO/CPU 密集，放线程池）
+        stored_count = await asyncio.to_thread(
+            store_document_chunks,
+            document_id=doc.id,
+            title=doc.title,
+            file_name=doc.file_name,
+            chunks=chunks,
+        )
+        if stored_count <= 0:
+            failed = await save_parse_failed(
+                db,
+                document_id,
+                _truncate_error("分片向量化写入失败：无有效分片"),
+            )
+            return failed or doc
+
         success = await save_parse_success(
             db,
             document_id,
             preview_text=preview,
-            chunk_count=len(chunks),
+            chunk_count=stored_count,
         )
         return success or doc
     except HTTPException as e:

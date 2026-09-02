@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +17,7 @@ from schemas.document import DocumentParseResponse, DocumentResponse
 from services.document_parse import parse_document
 from utils.auth import get_user_by_token
 from utils.minio_upload import upload_document_file
+from utils.milvus_store import delete_document_vectors
 from utils.response import success_response
 
 router = APIRouter(prefix="/api/document", tags=["document"])
@@ -169,5 +172,7 @@ async def delete(
         db: AsyncSession = Depends(get_database),
         document_id: int = Query(..., alias="id"),
 ):
+    # 先删 Milvus 分片向量，再删 MySQL 文档记录
+    await asyncio.to_thread(delete_document_vectors, document_id)
     result = await delete_document(document_id, db)
     return success_response(data="", message="删除成功")
