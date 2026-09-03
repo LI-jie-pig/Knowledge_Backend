@@ -5,6 +5,7 @@
 from fastapi import HTTPException
 
 from utils.parsers.base import BaseParser
+from utils.parsers.image_parser import ImageParser
 from utils.parsers.md_parser import MarkdownParser
 from utils.parsers.pdf_parser import PdfParser
 from utils.parsers.text_parser import TextParser
@@ -14,6 +15,11 @@ _PARSER_MAP: dict[str, type[BaseParser]] = {
     "txt": TextParser,
     "md": MarkdownParser,
     "markdown": MarkdownParser,
+    "png": ImageParser,
+    "jpg": ImageParser,
+    "jpeg": ImageParser,
+    "webp": ImageParser,
+    "gif": ImageParser,
 }
 
 

@@ -19,6 +19,7 @@ _client: MilvusClient | None = None
 
 def _get_client() -> MilvusClient:
     """获取 Milvus 客户端单例。"""
+    # 使用 global, 表明要修改模块级的 _client 变量，这里的_client类似java的静态变量
     global _client
     if _client is None:
         _client = MilvusClient(uri=MILVUS_URI)
@@ -47,14 +48,16 @@ def ensure_collection() -> None:
     确保 document_chunks 集合存在。
     若已存在但向量维度与当前配置不一致，则删除后重建。
     """
+    #单下划线开头表示「内部实现，别当公开 API 用」。
     client = _get_client()
     if client.has_collection(MILVUS_COLLECTION):
+        #获取向量维度dim的值
         existing_dim = _collection_embedding_dim(client)
         # 仅在明确读到维度且不匹配时重建；读不到则沿用现有集合
         if existing_dim is None or existing_dim == EMBEDDING_DIM:
             return
         client.drop_collection(MILVUS_COLLECTION)
-
+    # 创建集合，创建字段，字段自己创建定义，必须要有向量字段才可以做向量检索，向量字段要指定dim
     schema = MilvusClient.create_schema(auto_id=True, enable_dynamic_field=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
     schema.add_field(field_name="document_id", datatype=DataType.INT64)
@@ -180,7 +183,9 @@ def search_document_chunks(
     limit = top_k if top_k and top_k > 0 else RAG_TOP_K
     limit = min(limit, 20)
 
+    # 保证milvus的集合存在
     ensure_collection()
+    # 将用户问题转变为向量
     vectors = embed_texts([text])
     if not vectors:
         return []
@@ -205,6 +210,7 @@ def search_document_chunks(
     for hit in hits:
         if isinstance(hit, dict):
             entity = hit.get("entity") or hit
+            #取这条命中结果的相似度得分
             score = float(hit.get("distance", hit.get("score", 0)) or 0)
         else:
             entity = getattr(hit, "entity", None) or {}

@@ -53,7 +53,7 @@ async def chat_api(body: ChatRequest):
         document_id = None
 
     top_k = body.top_k if body.top_k and body.top_k > 0 else None
-
+    # 定义嵌套方法,在方法内定义方法，可避免闭包引用外部变量; 在StreamingResponse中返回开始循环调用event_stream
     async def event_stream():
         kwargs = {
             "question": question,

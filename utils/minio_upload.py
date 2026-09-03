@@ -129,7 +129,7 @@ async def upload_document_file(file: UploadFile) -> dict:
     # 扩展名白名单校验
     file_ext = _extract_ext(original_name)
     if file_ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="仅支持 pdf、txt、md 格式")
+        raise HTTPException(status_code=400, detail="仅支持 pdf、txt、md、png、jpg、webp、gif 格式")
 
     content = await file.read()
     file_size = len(content)

@@ -15,12 +15,17 @@ MINIO_BUCKET = "knowledge-images"
 MINIO_PUBLIC_BASE = f"http://{MINIO_ENDPOINT}/{MINIO_BUCKET}"
 
 # 允许上传的扩展名与对应 MIME
-ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "markdown"}
+ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "markdown", "png", "jpg", "jpeg", "webp", "gif"}
 EXT_CONTENT_TYPE = {
     "pdf": "application/pdf",
     "txt": "text/plain",
     "md": "text/markdown",
     "markdown": "text/markdown",
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "webp": "image/webp",
+    "gif": "image/gif",
 }
 # 单文件大小上限：50MB
 MAX_FILE_SIZE = 50 * 1024 * 1024

@@ -11,11 +11,5 @@ RAG_SCORE_THRESHOLD = 0.35
 # 注入 prompt 的单条 chunk 最大字符数
 RAG_CHUNK_MAX_CHARS = 800
 
-# 对话记忆：最多保留的消息条数（user+assistant 合计）
+# 对话记忆：最多保留的消息条数（user+assistant 合计，持久化在 MySQL）
 CHAT_MEMORY_MAX_MESSAGES = 12
-
-# 对话记忆 Redis TTL（秒）
-CHAT_MEMORY_TTL = 24 * 3600
-
-# Redis key 前缀
-CHAT_MEMORY_KEY_PREFIX = "chat:memory:"

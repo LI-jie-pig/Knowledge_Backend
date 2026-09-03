@@ -83,11 +83,12 @@ async def _iter_llm_deltas(messages: list[dict]) -> AsyncIterator[str]:
     def _worker() -> None:
         try:
             for delta in stream_chat(messages):
+                # 将内容放入队列，等待异步侧取出
                 loop.call_soon_threadsafe(queue.put_nowait, delta)
             loop.call_soon_threadsafe(queue.put_nowait, None)
         except BaseException as exc:  # noqa: BLE001 - 需传到异步侧
             loop.call_soon_threadsafe(queue.put_nowait, exc)
-
+    # 创建线程来执行_worker方法
     thread = threading.Thread(target=_worker, daemon=True)
     thread.start()
 
@@ -130,6 +131,7 @@ async def stream_rag_chat(
 
     try:
         # 1) 向量召回（同步 IO，放线程池）
+        # 线程池调用search_document_chunks,这样写会把q, top_k, document_id传给search_document_chunks
         chunks = await asyncio.to_thread(
             search_document_chunks,
             q,
@@ -147,6 +149,7 @@ async def stream_rag_chat(
             }
             for item in chunks
         ]
+        #把本次向量召回的参考文档通过流式接口推给前端展示
         yield _sse({"type": "sources", "sources": sources})
 
         # 2) 读取对话记忆并拼装 prompt
